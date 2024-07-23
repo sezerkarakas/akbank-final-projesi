@@ -62,17 +62,21 @@
 
                 $.ajax({
                     data: {
-                        msg: rawText,	
+                        msg: rawText,    
                     },
                     type: "POST",
                     url: "/get",
                 }).done(function(data) {
                     var botHtml = '';
-                    if (data.image) {
-                        botHtml = '<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0ceHoEKucsZqvtm_CQ1LoQcyO41HYXSDjdg&s" class="rounded-circle user_img_msg"></div><div class="msg_cotainer"><img src="' + data.image + '" alt="Chart" class="img-fluid"><span class="msg_time">' + str_time + '</span></div></div>';
-                    } else {
+                    
+                    if (data.text) {
                         botHtml = '<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0ceHoEKucsZqvtm_CQ1LoQcyO41HYXSDjdg&s" class="rounded-circle user_img_msg"></div><div class="msg_cotainer">' + data.text + '<span class="msg_time">' + str_time + '</span></div></div>';
                     }
+                    
+                    if (data.image) {
+                        botHtml = '<div class="d-flex justify-content-start mb-4"><div class="img_cont_msg"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0ceHoEKucsZqvtm_CQ1LoQcyO41HYXSDjdg&s" class="rounded-circle user_img_msg"></div><div class="msg_cotainer"><img src="' + data.image + '" class="img-fluid"/><span class="msg_time">' + str_time + '</span></div></div>';
+                    }
+                    
                     $("#messageFormeight").append($.parseHTML(botHtml));
                     scrollToBottom();
                 });

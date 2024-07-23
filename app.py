@@ -1,17 +1,28 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, url_for
 from chatbot import generateAnswer, initialize_rag_system
 from chat_with_pandasai import initialize_pandasai_system, generatePandasAIAnswer, update_pandasai_system
-import markdown2
 import os
-from io import BytesIO
-import base64
+import glob
+import markdown2
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import tkinter as tk
+from threading import Thread
 
 app = Flask(__name__)
 
 initialize_rag_system()
 initialize_pandasai_system()
 
-DATA_KEYWORDS = ['veri', 'csv', 'tablo', 'grafik', 'veri seti', 'pandas']
+try:
+    datas = glob.glob("pandasai_data/*")
+    for data in datas:
+        os.remove(data)
+except:
+    pass
+
+DATA_KEYWORDS = ['veri', 'csv', 'tablo', 'grafik', 'veri seti', 'pandas', "eklenti"]
 
 @app.route('/')
 def index():
@@ -20,15 +31,27 @@ def index():
 @app.route('/get', methods=['POST'])
 def get_bot_response():
     user_message = request.form['msg']
+    try:
+        imgs = glob.glob("static/exports/charts/*")
+        for img in imgs:
+            os.remove(img)
+        print("resimler kaldırıldı")
+    except:
+        print("resim yok")
+        pass
     if any(keyword in user_message.lower() for keyword in DATA_KEYWORDS) and os.path.exists("pandasai_data/kullanici_data.csv"):
         response = generatePandasAIAnswer(user_message)
-        if response.endswith(".png"):
-            image_path = response
-            return jsonify({'text': html_response, 'image': image_path})
+        if len(os.listdir('static/exports/charts/')) != 0:
+            img_path = os.path.join("static/exports/charts/", os.listdir('static/exports/charts/')[0])
+            print("görsel oluşturulmuş")
+            return jsonify({'image': img_path})
+        else:
+            print("yazılı cevap")
+            return jsonify({'text': markdown2.markdown(response)})
     else:
+        print("rag")
         response = generateAnswer(user_message)
-    html_response = markdown2.markdown(response)
-    return jsonify({'text': html_response})
+        return jsonify({'text': markdown2.markdown(response)})
 
 @app.route('/delete', methods=["POST"])
 def delete_file():
@@ -45,7 +68,6 @@ def upload_file():
     if file and file.filename.endswith('.csv'):
         filepath = "pandasai_data/kullanici_data.csv"
         file.save(filepath)
-        # Update the PandasAI system with the new data
         update_pandasai_system(filepath)
         return 'File uploaded and processed successfully'
     return 'Invalid file type. Only CSV files are allowed.'
